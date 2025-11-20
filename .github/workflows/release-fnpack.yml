@@ -21,6 +21,12 @@ jobs:
             exit 1
           fi
 
+      - name: Download ammds binary
+        run: |
+          mkdir -p app/bin
+          curl -L -o app/bin/ammds https://github.com/QYG2297248353/AMMDS-Offline-FnNas/releases/download/${GITHUB_REF_NAME}/ammds
+          chmod +x app/bin/ammds
+
       - name: Download fnpack
         run: |
           curl -L -o fnpack-1.0.1-linux-amd64 https://static2.fnnas.com/fnpack/fnpack-1.0.1-linux-amd64
