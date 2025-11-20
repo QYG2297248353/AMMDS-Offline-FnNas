@@ -47,8 +47,8 @@ log_message "[系统] 语言: ${TRIM_SYS_LANGUAGE:-未设置}"
 log_message "===================================="
 log_message "==============主程序=============="
 
-LOG_FILE="${TRIM_PKGVAR}/info.log"
-PID_FILE="${TRIM_PKGVAR}/app.pid"
+LOG_FILE="${TRIM_PKGTMP}/info.log"
+PID_FILE="${TRIM_PKGTMP}/app.pid"
 
 # 应用程序路径
 APP_BIN="${TRIM_APPDEST}/bin/ammds"
