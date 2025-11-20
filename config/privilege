@@ -1,0 +1,8 @@
+{
+    "defaults":
+    {
+        "run-as": "root"
+    },
+    "username": "app-ammds",
+    "groupname": "app-ammds"
+}

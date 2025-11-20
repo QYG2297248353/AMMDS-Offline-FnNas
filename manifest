@@ -1,0 +1,16 @@
+appname         = ammds
+version         = 1.6.31
+desc            = AMMDS（Adult Movie MetaData Scraper）是一款私人专属数据管理平台，专注于帮助用户轻松管理和整理个人影视库。通过智能刮削元数据、演员识别、多源数据匹配等功能，打造专属的家庭影院体验。
+arch            = x86_64
+source          = thirdparty
+maintainer      = 萌森工作室
+maintainer_url  = https://ammds.lifebus.top/
+distributor     = 萌森工作室
+distributor_url = https://github.com/QYG2297248353/AMMDS-Docker
+os_min_ver      = 0.9.0
+display_name    = AMMDS
+ctl_stop        = true
+service_port    = 9523
+checkport       = true
+desktop_uidir   = ui
+desktop_applaunchname = ammds.Application

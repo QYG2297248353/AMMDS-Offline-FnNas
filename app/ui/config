@@ -1,0 +1,13 @@
+{
+    ".url": {
+        "ammds.Application": {
+            "title": "AMMDS",
+            "icon": "images/ICON_{0}.PNG",
+            "type": "iframe",
+            "protocol": "http",
+            "port": "9523",
+            "url": "/",
+            "allUsers": false
+        }
+    }
+}

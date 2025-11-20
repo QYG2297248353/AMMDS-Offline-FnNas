@@ -1,0 +1,58 @@
+<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background-color: #f5f5f5;">
+    <div style="background-color: white; border-radius: 10px; padding: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        <div style="text-align: center; border-bottom: 2px solid #e0e0e0; padding-bottom: 20px; margin-bottom: 30px;">
+            <h1 style="color: #2c3e50; margin: 0; font-size: 28px;">用户隐私保护协议</h1>
+            <div style="color: #7f8c8d; font-size: 16px; margin-top: 10px;">生效日期：2025年01月01日</div>
+        </div>
+
+        <div style="margin-bottom: 30px;">
+            <p style="color: #34495e; line-height: 1.6;">尊敬的用户：</p>
+            <p style="color: #34495e; line-height: 1.6;">
+                感谢您信任并使用新疆萌森软件开发工作室（以下简称"我们"）提供的服务。我们深知个人信息对您的重要性，并会尽全力保护您的个人信息安全。本协议旨在帮助您了解我们如何收集、使用和保护您的个人信息。
+            </p>
+        </div>
+
+        <h2 style="color: #2980b9; border-left: 4px solid #3498db; padding-left: 15px; margin-top: 30px;">一、信息收集与使用</h2>
+        <div style="margin-bottom: 30px;">
+            <p style="color: #34495e; line-height: 1.6;">我们可能收集的信息包括：</p>
+            <ul style="color: #34495e; line-height: 1.8; padding-left: 20px;">
+                <li>设备信息：设备型号、操作系统版本、设备设置等</li>
+                <li>日志信息：使用时间、使用时长、操作记录等</li>
+                <li>性能数据：软件运行状态、错误日志等</li>
+            </ul>
+            <p style="color: #34495e; line-height: 1.6;">这些信息仅用于：</p>
+            <ul style="color: #34495e; line-height: 1.8; padding-left: 20px;">
+                <li>改进我们的产品和服务质量</li>
+                <li>提供更好的用户体验</li>
+                <li>进行必要的故障排查</li>
+            </ul>
+        </div>
+
+        <h2 style="color: #2980b9; border-left: 4px solid #3498db; padding-left: 15px;">二、信息保护措施</h2>
+        <div style="margin-bottom: 30px;">
+            <p style="color: #34495e; line-height: 1.6;">我们采取以下措施保护您的信息：</p>
+            <ul style="color: #34495e; line-height: 1.8; padding-left: 20px;">
+                <li>数据加密存储和传输</li>
+                <li>严格的访问控制和权限管理</li>
+                <li>定期安全审计和风险评估</li>
+            </ul>
+        </div>
+
+        <h2 style="color: #2980b9; border-left: 4px solid #3498db; padding-left: 15px;">三、联系我们</h2>
+        <div style="background-color: #ecf0f1; border-radius: 8px; padding: 20px; margin-bottom: 30px;">
+            <p style="color: #34495e; line-height: 1.6;">
+                如果您对本隐私协议有任何疑问、意见或建议，欢迎通过以下方式与我们联系：
+            </p>
+            <p style="color: #34495e; line-height: 1.6;">
+                📧 电子邮箱：<a href="mailto:support@lifebus.top" style="color: #2980b9; text-decoration: none;">support@lifebus.top</a>
+            </p>
+            <p style="color: #34495e; line-height: 1.6;">⏰ 服务时间：周一至周五 9:00-18:00（节假日除外）</p>
+        </div>
+
+        <footer style="text-align: center; border-top: 1px solid #e0e0e0; padding-top: 20px; color: #7f8c8d;">
+            <p style="margin: 5px 0;">版权所有 © 2023-2025 新疆萌森软件开发工作室</p>
+            <p style="margin: 5px 0;">统一社会信用代码：91652301MACHE3T54</p>
+            <p style="margin: 5px 0;">成立日期：2023年4月28日</p>
+        </footer>
+    </div>
+</div>
