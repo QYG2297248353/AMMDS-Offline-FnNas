@@ -47,102 +47,101 @@ log_message "[系统] 语言: ${TRIM_SYS_LANGUAGE:-未设置}"
 log_message "===================================="
 log_message "==============主程序=============="
 
-LOG_FILE="${TRIM_PKGTMP}/info.log"
-PID_FILE="${TRIM_PKGTMP}/app.pid"
+LOG_FILE="${TRIM_PKGVAR}/info.log"
+PID_FILE="${TRIM_PKGVAR}/app.pid"
 
-# 应用程序路径
 APP_BIN="${TRIM_APPDEST}/bin/ammds"
-# 工作目录
-DB_PATH="${TRIM_APPDEST_VOL}/@appshare/ammds"
-# 端口
+
+WORK_DIR="${TRIM_APPDEST_VOL}/@appshare/ammds"
+
 PORT="${ammds_app_port}"
-# 密码
 PASSWORD="${ammds_admin_password}"
 
-mkdir -p "$(dirname "${DB_PATH}")"
-
-start_process() {
-    if status; then
-        log_message "应用程序已在运行"
-        return 0
-    fi
-
-    log_message "正在启动应用程序..."
-    
-    cd "$(dirname \"${DB_PATH}\")" && \
-    AMMDS_SERVER_PORT="${PORT}" \
-    ADMIN_PASS="${PASSWORD}" \
-    "${APP_BIN}" \
-    >> "${LOG_FILE}" 2>&1 &
-    
-    printf "%s" "$!" > "${PID_FILE}"
-    
-    log_message "应用程序已启动，PID: $!"
-    return 0
-}
-
-stop_process() {
-    log_message "正在停止应用程序..."
-
-    if [ -r "${PID_FILE}" ]; then
-        pid=$(head -n 1 "${PID_FILE}" | tr -d '[:space:]')
-        
-        log_message "PID: ${pid}"
-        if ! check_process "${pid}"; then
-            rm -f "${PID_FILE}"
-            log_message "PID文件已移除"
-            return
-        fi
-
-        log_message "向PID ${pid} 发送 TERM 信号..."
-        kill -TERM "${pid}" >> "${LOG_FILE}" 2>&1
-
-        local count=0
-        while check_process "${pid}" && [ $count -lt 10 ]; do
-            sleep 1
-            count=$((count + 1))
-            log_message "等待进程终止... (${count}s/10s)"
-        done
-
-        if check_process "${pid}"; then
-            log_message "向PID ${pid} 发送 KILL 信号..."
-            kill -KILL "${pid}"
-            sleep 1
-            rm -f "${PID_FILE}"
-            log_message "强制杀死进程"
-        else
-            log_message "进程已正常终止"
-        fi
-    else
-        log_message "未找到PID文件"
-    fi
-
-    return 0
-}
+mkdir -p "${WORK_DIR}"
+mkdir -p "$(dirname "${LOG_FILE}")"
 
 check_process() {
-    local pid=$1
-    if kill -0 "${pid}" 2>/dev/null; then
-        return 0
-    else
-        return 1
-    fi
+    local pid="$1"
+    kill -0 "${pid}" 2>/dev/null
 }
 
 status() {
     if [ -f "${PID_FILE}" ]; then
-        pid=$(head -n 1 "${PID_FILE}" | tr -d '[:space:]')
+        local pid
+        pid=$(tr -d '[:space:]' < "${PID_FILE}")
+
         if check_process "${pid}"; then
             log_message "应用程序正在运行 (PID: ${pid})"
             return 0
         else
+            log_message "清理过期 PID 文件"
             rm -f "${PID_FILE}"
-            log_message "清理过期的PID文件"
-        fi    
+        fi
+    fi
+    log_message "应用程序未运行"
+    return 3
+}
+
+start_process() {
+    if status >/dev/null 2>&1; then
+        log_message "应用程序已在运行"
+        return 0
     fi
 
-    log_message "应用程序未运行"
-    return 1
+    log_message "启动应用程序..."
+    log_message "工作目录: ${WORK_DIR}"
+    log_message "可执行文件: ${APP_BIN}"
+
+    cd "${WORK_DIR}" || {
+        log_message "无法进入工作目录: ${WORK_DIR}"
+        return 1
+    }
+
+    AMMDS_SERVER_PORT="${PORT}" \
+    ADMIN_PASS="${PASSWORD}" \
+    "${APP_BIN}" >> "${LOG_FILE}" 2>&1 &
+
+    echo $! > "${PID_FILE}"
+    log_message "启动完成，PID: $!"
+
+    return 0
+}
+
+stop_process() {
+    log_message "停止应用程序..."
+
+    if [ ! -f "${PID_FILE}" ]; then
+        log_message "PID 文件不存在"
+        return 0
+    fi
+
+    local pid
+    pid=$(tr -d '[:space:]' < "${PID_FILE}")
+
+    if ! check_process "${pid}"; then
+        log_message "进程不存在，清理 PID"
+        rm -f "${PID_FILE}"
+        return 0
+    fi
+
+    log_message "发送 TERM 给 PID ${pid}"
+    kill -TERM "${pid}"
+
+    for i in $(seq 1 10); do
+        if ! check_process "${pid}"; then
+            log_message "进程已结束"
+            rm -f "${PID_FILE}"
+            return 0
+        fi
+        log_message "等待进程结束... ${i}/10"
+        sleep 1
+    done
+
+    log_message "强制杀死 PID ${pid}"
+    kill -KILL "${pid}"
+    rm -f "${PID_FILE}"
+
+    return 0
 }
 
 case $1 in
