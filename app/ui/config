@@ -3,7 +3,7 @@
         "ammds.Application": {
             "title": "AMMDS",
             "icon": "images/ICON_{0}.PNG",
-            "type": "iframe",
+            "type": "url",
             "protocol": "http",
             "port": "9523",
             "url": "/",

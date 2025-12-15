@@ -41,6 +41,7 @@
                 "type": "text",
                 "field": "ammds_app_port",
                 "label": "应用端口",
+                "helpText": "非默认端口9523，请手动通过端口访问",
                 "initValue": "9523",
                 "rules": [
                     {
