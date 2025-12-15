@@ -75,6 +75,34 @@ jobs:
           cp "$FILE" /tmp/output.fpk
           echo "FILE_PATH=/tmp/output.fpk" >> $GITHUB_ENV
 
+      - name: Delete existing release asset if exists
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner
+            const repo = context.repo.repo
+            const release_id = context.payload.release.id
+            const asset_name = `${context.repo.repo}.fpk`
+      
+            const assets = await github.rest.repos.listReleaseAssets({
+              owner,
+              repo,
+              release_id
+            })
+      
+            const asset = assets.data.find(a => a.name === asset_name)
+      
+            if (asset) {
+              console.log(`Deleting existing asset: ${asset.name}`)
+              await github.rest.repos.deleteReleaseAsset({
+                owner,
+                repo,
+                asset_id: asset.id
+              })
+            } else {
+              console.log("No existing asset found")
+            }
+
       - name: Upload .fpk to Release Assets
         uses: actions/upload-release-asset@v1
         env:
