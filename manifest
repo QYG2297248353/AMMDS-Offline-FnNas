@@ -1,5 +1,5 @@
 appname         = ammds
-version         = 1.6.31
+version         = 1.6.34
 desc            = AMMDS（Adult Movie MetaData Scraper）是一款私人专属数据管理平台，专注于帮助用户轻松管理和整理个人影视库。通过智能刮削元数据、演员识别、多源数据匹配等功能，打造专属的家庭影院体验。
 arch            = x86_64
 source          = thirdparty
