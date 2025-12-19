@@ -20,6 +20,18 @@ jobs:
             echo "Tag does not match vX.X.X format. Exiting."
             exit 1
           fi
+          VERSION="${TAG#v}"
+          echo "Extracted version: $VERSION"
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+      
+      - name: Update manifest version
+        run: |
+          if [ ! -f manifest ]; then
+            echo "Error: manifest file not found in root directory!"
+            exit 1
+          fi
+          sed -i "s/^version[[:space:]]*=.*/version         = ${{ env.VERSION }}/" manifest
+          echo "Updated manifest version to: ${{ env.VERSION }}"
 
       - name: Download and extract ammds backend
         run: |
@@ -33,7 +45,6 @@ jobs:
           echo "Extracting tarball..."
           tar -xzf backend.tar.gz
 
-          # 自动查找 ammds 文件
           AMMDS_FILE=$(find . -type f -name "ammds" | head -n 1)
 
           if [ -z "$AMMDS_FILE" ]; then
