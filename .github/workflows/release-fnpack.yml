@@ -10,36 +10,35 @@ on:
 jobs:
   build-fnpack:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Verify tag format
+      # 1️⃣ 校验 tag 并提取版本号
+      - name: Verify tag format and extract version
+        shell: bash
         run: |
-          if [[ ! "$GITHUB_REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "Tag does not match vX.X.X format. Exiting."
-            exit 1
-          fi
-          VERSION="${TAG#v}"
-          echo "Extracted version: $VERSION"
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
-      
-      - name: Update manifest version
-        run: |
-          if [ ! -f manifest ]; then
-            echo "Error: manifest file not found in root directory!"
-            exit 1
-          fi
-          sed -i "s/^version[[:space:]]*=.*/version         = ${{ env.VERSION }}/" manifest
-          echo "Updated manifest version to: ${{ env.VERSION }}"
+          TAG="${GITHUB_REF_NAME}"
 
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "❌ Tag does not match vX.Y.Z format: $TAG"
+            exit 1
+          fi
+
+          VERSION="${TAG#v}"
+          echo "✅ Extracted version: $VERSION"
+
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+
+      # 2️⃣ 下载核心文件
       - name: Download and extract ammds backend
+        shell: bash
         run: |
           mkdir -p app/bin
           echo "Downloading backend tarball..."
-          
+
           URL="https://github.com/QYG2297248353/AMMDS-Docker/releases/download/${GITHUB_REF_NAME}/ammds-amd64-backend.tar.gz"
-          
           curl -L -o backend.tar.gz "$URL"
 
           echo "Extracting tarball..."
@@ -48,7 +47,7 @@ jobs:
           AMMDS_FILE=$(find . -type f -name "ammds" | head -n 1)
 
           if [ -z "$AMMDS_FILE" ]; then
-            echo "Error: ammds binary not found after extracting!"
+            echo "❌ Error: ammds binary not found after extracting!"
             exit 1
           fi
 
@@ -56,53 +55,79 @@ jobs:
           mv "$AMMDS_FILE" app/bin/ammds
           chmod +x app/bin/ammds
 
+      # 3️⃣ 下载 fnpack 工具
       - name: Download fnpack
+        shell: bash
         run: |
           curl -L -o fnpack-1.0.1-linux-amd64 https://static2.fnnas.com/fnpack/fnpack-1.0.1-linux-amd64
           chmod +x fnpack-1.0.1-linux-amd64
           sudo mv fnpack-1.0.1-linux-amd64 /usr/local/bin/fnpack
 
+      # 4️⃣ 资源准备
       - name: Prepare source directory
+        shell: bash
         run: |
           SRC_DIR="src-temp"
           mkdir -p "$SRC_DIR"
-          rsync -a --exclude='.git' ./ "$SRC_DIR/"
-          echo "SRC_DIR=$SRC_DIR" >> $GITHUB_ENV
 
-      - name: Build fpk
+          rsync -a --exclude='.git' ./ "$SRC_DIR/"
+          echo "SRC_DIR=$SRC_DIR" >> "$GITHUB_ENV"
+
+      # 5️⃣ 更新 manifest 版本号
+      - name: Update manifest version
+        shell: bash
         run: |
-          fnpack build -d "$SRC_DIR"
-          echo "Build finished. Searching for .fpk output..."
-          
-          FILE=$(find . -maxdepth 2 -type f -name "*.fpk" | head -n 1)
-          
-          if [ -z "$FILE" ]; then
-            echo "Error: no .fpk file generated!"
+          MANIFEST="${SRC_DIR}/manifest"
+
+          if [ ! -f "$MANIFEST" ]; then
+            echo "❌ Error: manifest file not found at $MANIFEST"
             exit 1
           fi
-          
-          echo "Found FPK: $FILE"
-          
-          cp "$FILE" /tmp/output.fpk
-          echo "FILE_PATH=/tmp/output.fpk" >> $GITHUB_ENV
 
+          echo "Updating manifest version to: ${VERSION}"
+
+          sed -i "s/^version[[:space:]]*=.*/version         = ${VERSION}/" "$MANIFEST"
+
+          echo "Updated manifest content:"
+          grep "^version" "$MANIFEST"
+
+      # 6️⃣ 构建 FPK
+      - name: Build fpk
+        shell: bash
+        run: |
+          fnpack build -d "$SRC_DIR"
+
+          echo "Build finished. Searching for .fpk output..."
+
+          FILE=$(find . -maxdepth 2 -type f -name "*.fpk" | head -n 1)
+
+          if [ -z "$FILE" ]; then
+            echo "❌ Error: no .fpk file generated!"
+            exit 1
+          fi
+
+          echo "Found FPK: $FILE"
+
+          cp "$FILE" /tmp/output.fpk
+          echo "FILE_PATH=/tmp/output.fpk" >> "$GITHUB_ENV"
+
+      # 7️⃣ 资产效验
       - name: Delete existing release asset if exists
         uses: actions/github-script@v7
         with:
           script: |
-            const owner = context.repo.owner
-            const repo = context.repo.repo
+            const { owner, repo } = context.repo
             const release_id = context.payload.release.id
-            const asset_name = `${context.repo.repo}.fpk`
-      
+            const asset_name = `${repo}.fpk`
+
             const assets = await github.rest.repos.listReleaseAssets({
               owner,
               repo,
               release_id
             })
-      
+
             const asset = assets.data.find(a => a.name === asset_name)
-      
+
             if (asset) {
               console.log(`Deleting existing asset: ${asset.name}`)
               await github.rest.repos.deleteReleaseAsset({
@@ -114,6 +139,7 @@ jobs:
               console.log("No existing asset found")
             }
 
+      # 8️⃣ 发布 FPK 到 Release
       - name: Upload .fpk to Release Assets
         uses: actions/upload-release-asset@v1
         env:
