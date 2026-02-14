@@ -35,25 +35,29 @@ jobs:
       - name: Download and extract ammds backend
         shell: bash
         run: |
-          mkdir -p app/bin
+          mkdir -p /tmp/backend
+          cd /tmp/backend
+      
           echo "Downloading backend tarball..."
-
+      
           URL="https://github.com/QYG2297248353/AMMDS-Docker/releases/download/${GITHUB_REF_NAME}/ammds-amd64-backend.tar.gz"
           curl -L -o backend.tar.gz "$URL"
-
+      
           echo "Extracting tarball..."
           tar -xzf backend.tar.gz
-
+      
           AMMDS_FILE=$(find . -type f -name "ammds" | head -n 1)
-
+      
           if [ -z "$AMMDS_FILE" ]; then
             echo "❌ Error: ammds binary not found after extracting!"
             exit 1
           fi
-
-          echo "Found ammds at: $AMMDS_FILE"
-          mv "$AMMDS_FILE" app/bin/ammds
-          chmod +x app/bin/ammds
+      
+          echo "Found new ammds at: $AMMDS_FILE"
+      
+          mkdir -p $GITHUB_WORKSPACE/app/bin
+          cp -f "$AMMDS_FILE" $GITHUB_WORKSPACE/app/bin/ammds
+          chmod +x $GITHUB_WORKSPACE/app/bin/ammds
 
       # 3️⃣ 下载 fnpack 工具
       - name: Download fnpack
