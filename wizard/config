@@ -24,14 +24,14 @@
                 "field": "AMMDS_SCHEDULER_ENABLE",
                 "label": "是否启用定时任务",
                 "helpText": "是否启用定时任务，默认启用",
-                "initValue": "true",
+                "initValue": "true"
             },
             {
                 "type": "text",
                 "field": "AMMDS_MONITOR_ENABLE",
                 "label": "是否启用监控监控",
                 "helpText": "是否启用监控监控，默认启用",
-                "initValue": "true",
+                "initValue": "true"
             },
             {
                 "type": "text",
