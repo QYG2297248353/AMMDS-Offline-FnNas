@@ -15,6 +15,8 @@ log_message() {
     echo "${ts} [AMMDS] ${msg}" | tee -a "${MAIN_LOG}"
 }
 
+mkdir -p /tmp/ammds
+
 ############################
 # 基本信息
 ############################
@@ -42,8 +44,8 @@ ENV_CONFIG="${TRIM_PKGETC}/ammds.env"
 init_env() {
     # 根据系统架构选择对应二进制
     case "${TRIM_SYS_ARCH}" in
-        x86_64|amd64)  ARCH_SUFFIX="amd" ;;
-        aarch64|arm64) ARCH_SUFFIX="arm" ;;
+        x86_64|amd64|x86|i386|i486|i586|i686) ARCH_SUFFIX="amd" ;;
+        aarch64|arm64)                       ARCH_SUFFIX="arm" ;;
         *)
             log_message "错误：不支持的系统架构 ${TRIM_SYS_ARCH}"
             echo "[AMMDS] 不支持的系统架构：${TRIM_SYS_ARCH}" | tee -a "${FNOAS_LOG}"

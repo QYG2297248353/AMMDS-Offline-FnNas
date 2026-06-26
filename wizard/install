@@ -3,10 +3,6 @@
         "stepTitle": "管理员配置",
         "items": [
             {
-                "type": "tips",
-                "helpText": "默认管理员用户名为\t\tammds"
-            },
-            {
                 "type": "password",
                 "field": "ammds_password",
                 "label": "管理员密码",
@@ -31,6 +27,10 @@
                         "message": "请确认密码"
                     }
                 ]
+            },
+            {
+                "type": "tips",
+                "helpText": "默认管理员用户名为\t\tammds"
             }
         ]
     },
@@ -66,7 +66,7 @@
                 "type": "switch",
                 "field": "ammds_terms",
                 "label": "我已阅读并同意服务条款",
-                "initValue": "false"
+                "initValue": false
             }
         ]
     }

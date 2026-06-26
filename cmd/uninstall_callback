@@ -13,6 +13,8 @@ log_message() {
     echo "${ts} [AMMDS] ${msg}" | tee -a "${MAIN_LOG}"
 }
 
+mkdir -p /tmp/ammds
+
 if [ "${ammds_data_action}" = "delete" ]; then
     log_message "删除 TRIM_PKGVAR 目录"
     rm -rf "${TRIM_PKGVAR}"

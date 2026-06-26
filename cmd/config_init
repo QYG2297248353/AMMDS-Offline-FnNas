@@ -13,6 +13,8 @@ log_message() {
     echo "${ts} [AMMDS] ${msg}" | tee -a "${MAIN_LOG}"
 }
 
+mkdir -p /tmp/ammds
+
 log_message "==============配置开始=============="
 
 ############################
