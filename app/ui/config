@@ -5,7 +5,7 @@
             "icon": "images/ICON_{0}.PNG",
             "type": "url",
             "protocol": "",
-            "port": "${AMMDS_PORT}",
+            "port": "${ammds_port}",
             "url": "/",
             "allUsers": false
         }

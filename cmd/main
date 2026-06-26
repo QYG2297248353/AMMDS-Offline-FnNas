@@ -41,6 +41,24 @@ LOG_FILE="${APP_LOG}"
 PID_FILE="/tmp/ammds/ammds.pid"
 ENV_CONFIG="${TRIM_PKGETC}/ammds.env"
 
+# 从 TRIM_DATA_SHARE_PATHS（冒号分隔的路径列表）中获取指定目录名称的路径
+# 参数: $1 - 目录名称（如 ammds）
+get_share_path() {
+    local target="$1"
+    local saved_ifs="${IFS}"
+    IFS=':'
+    for path in ${TRIM_DATA_SHARE_PATHS}; do
+        IFS="${saved_ifs}"
+        if [ "${path##*/}" = "${target}" ]; then
+            echo "${path}"
+            return 0
+        fi
+        IFS=':'
+    done
+    IFS="${saved_ifs}"
+    return 1
+}
+
 init_env() {
     # 根据系统架构选择对应二进制
     case "${TRIM_SYS_ARCH}" in
@@ -53,7 +71,7 @@ init_env() {
             ;;
     esac
     APP_BIN="${TRIM_APPDEST}/bin/ammds-${ARCH_SUFFIX}"
-    WORK_DIR="${TRIM_APPDEST_VOL}/@appshare/ammds"
+    WORK_DIR="$(get_share_path "ammds")"
 
     # 从配置文件加载环境变量
     if [ -f "${ENV_CONFIG}" ]; then

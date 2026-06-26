@@ -13,6 +13,5 @@ ctl_stop        = true
 install_type    = root
 desktop_uidir     = ui
 desktop_applaunchname = ammds.Application
-service_port    = 9523
 checkport       = true
 disable_authorization_path = false
