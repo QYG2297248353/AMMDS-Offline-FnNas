@@ -1,0 +1,18 @@
+#!/bin/bash
+
+############################
+# 日志函数
+############################
+MAIN_LOG="/tmp/ammds/fnos.log"
+APP_LOG="/tmp/ammds/app.log"
+
+log_message() {
+    local msg="$1"
+    local ts
+    ts=$(date '+%Y-%m-%d %H:%M:%S')
+    echo "${ts} [AMMDS] ${msg}" | tee -a "${MAIN_LOG}"
+}
+
+log_message "==============配置开始=============="
+
+exit 0

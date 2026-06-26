@@ -1,0 +1,185 @@
+#!/bin/bash
+
+
+############################
+# 日志函数
+############################
+MAIN_LOG="/tmp/ammds/fnos.log"
+APP_LOG="/tmp/ammds/app.log"
+
+log_message() {
+    local msg="$1"
+    local ts
+    ts=$(date '+%Y-%m-%d %H:%M:%S')
+    echo "${ts} [AMMDS] ${msg}" | tee -a "${MAIN_LOG}"
+}
+
+############################
+# 基本信息
+############################
+log_message "==============基本信息=============="
+log_message "应用名称 ${TRIM_APPNAME}"
+log_message "应用版本号 ${TRIM_APPVER}"
+log_message "应用目录 ${TRIM_APPDEST}"
+log_message "基础目录 ${TRIM_APPDEST_VOL}"
+log_message "FN系统版本号 ${TRIM_SYS_VERSION}"
+log_message "FN系统架构 ${TRIM_SYS_ARCH}"
+log_message "FN系统机器ID ${TRIM_SYS_MACHINE_ID}"
+log_message "FN系统语言 ${TRIM_SYS_LANGUAGE}"
+
+
+
+log_message "==============主程序启动=============="
+
+############################
+# 基本变量
+############################
+LOG_FILE="${APP_LOG}"
+PID_FILE="/tmp/ammds/ammds.pid"
+
+APP_BIN="${TRIM_APPDEST}/bin/ammds"
+WORK_DIR="${TRIM_APPDEST_VOL}/@appshare/ammds"
+
+AMMDS_PORT="${ammds_app_port}"
+PASSWORD="${ammds_admin_password}"
+
+mkdir -p "${WORK_DIR}"
+
+############################
+# 工具函数
+############################
+check_process() {
+    local pid="$1"
+    kill -0 "${pid}" 2>/dev/null
+}
+
+############################
+# 状态检测
+############################
+status() {
+    if [ -f "${PID_FILE}" ]; then
+        local pid
+        pid=$(tr -d '[:space:]' < "${PID_FILE}")
+
+        if [ -n "${pid}" ] && check_process "${pid}"; then
+            log_message "应用正在运行 (PID=${pid})"
+            return 0
+        else
+            log_message "发现过期 PID，已清理"
+            rm -f "${PID_FILE}"
+        fi
+    fi
+
+    log_message "应用未运行"
+    return 3
+}
+
+############################
+# 启动程序
+############################
+start_process() {
+    if status >/dev/null 2>&1; then
+        log_message "应用已在运行，跳过启动"
+        return 0
+    fi
+
+    log_message "准备启动应用"
+    log_message "BIN=${APP_BIN}"
+    log_message "WORK_DIR=${WORK_DIR}"
+    log_message "PORT=${PORT}"
+
+    if [ ! -x "${APP_BIN}" ]; then
+        log_message "启动失败：程序不可执行 ${APP_BIN}"
+        return 1
+    fi
+
+    cd "${WORK_DIR}" || {
+        log_message "启动失败：无法进入工作目录"
+        return 1
+    }
+
+    : > "${APP_LOG}"
+
+    AMMDS_SERVER_PORT="${PORT}" \
+    ADMIN_PASS="${PASSWORD}" \
+    "${APP_BIN}" >> "${APP_LOG}" 2>&1 &
+
+    local pid=$!
+    sleep 1
+
+    if check_process "${pid}"; then
+        echo "${pid}" > "${PID_FILE}"
+        log_message "启动成功 (PID=${pid})"
+        return 0
+    fi
+
+    log_message "启动失败：进程已退出"
+    log_message "===== 最近 50 行程序日志 ====="
+    tail -n 50 "${APP_LOG}" | while read -r line; do
+        log_message "APPLOG: ${line}"
+    done
+    log_message "================================"
+
+    return 1
+}
+
+############################
+# 停止程序
+############################
+stop_process() {
+    log_message "停止应用"
+
+    if [ ! -f "${PID_FILE}" ]; then
+        log_message "未找到 PID 文件，认为已停止"
+        return 0
+    fi
+
+    local pid
+    pid=$(tr -d '[:space:]' < "${PID_FILE}")
+
+    if ! check_process "${pid}"; then
+        log_message "进程不存在，清理 PID"
+        rm -f "${PID_FILE}"
+        return 0
+    fi
+
+    log_message "发送 TERM 给 PID=${pid}"
+    kill -TERM "${pid}"
+
+    for i in $(seq 1 10); do
+        if ! check_process "${pid}"; then
+            log_message "进程已正常退出"
+            rm -f "${PID_FILE}"
+            return 0
+        fi
+        sleep 1
+    done
+
+    log_message "TERM 超时，发送 KILL"
+    kill -KILL "${pid}" 2>/dev/null
+    rm -f "${PID_FILE}"
+
+    return 0
+}
+
+############################
+# 命令入口
+############################
+case "$1" in
+    start)
+        start_process
+        exit $?
+        ;;
+    stop)
+        stop_process
+        exit $?
+        ;;
+    status)
+        status
+        exit $?
+        ;;
+    *)
+        log_message "未知命令: $1 (start|stop|status)"
+        exit 1
+        ;;
+esac

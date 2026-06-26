@@ -1,0 +1,46 @@
+{
+    "data-share": {
+        "shares": [
+            {
+                "name": "ammds",
+                "permission": {
+                    "rw": [
+                        "ammds"
+                    ]
+                }
+            },
+            {
+                "name": "ammds/data",
+                "permission": {
+                    "rw": [
+                        "ammds"
+                    ]
+                }
+            },
+            {
+                "name": "ammds/db",
+                "permission": {
+                    "rw": [
+                        "ammds"
+                    ]
+                }
+            },
+            {
+                "name": "ammds/download",
+                "permission": {
+                    "rw": [
+                        "ammds"
+                    ]
+                }
+            },
+            {
+                "name": "logs",
+                "permission": {
+                    "rw": [
+                        "ammds"
+                    ]
+                }
+            }
+        ]
+    }
+}

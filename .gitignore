@@ -1,0 +1,4 @@
+config.env
+app/bin/ammds
+app/bin/ammds-amd
+app/bin/ammds-arm
