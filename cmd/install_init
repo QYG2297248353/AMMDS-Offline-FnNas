@@ -5,6 +5,7 @@
 ############################
 MAIN_LOG="/tmp/ammds/fnos.log"
 APP_LOG="/tmp/ammds/app.log"
+FNOAS_LOG="${TRIM_TEMP_LOGFILE}"
 
 log_message() {
     local msg="$1"
@@ -14,5 +15,65 @@ log_message() {
 }
 
 log_message "==============安装开始=============="
+
+# 效验密码一致性
+if [ "${ammds_password}" != "${ammds_password_confirm}" ]; then
+    log_message "密码不一致"
+    echo "[AMMDS] 管理员密码不一致" | tee -a "${FNOAS_LOG}" >> "${FNOAS_LOG}" 2>&1
+    exit 1
+fi
+
+############################
+# 端口检查函数
+############################
+check_port() {
+    local port="$1"
+    ss -tlnp 2>/dev/null | grep -q ":${port} " && return 0
+    return 1
+}
+
+# 检查端口是否已占用
+if check_port "${ammds_port}"; then
+    log_message "端口 ${ammds_port} 已占用"
+    echo "[AMMDS] 端口 ${ammds_port} 已占用" | tee -a "${FNOAS_LOG}" >> "${FNOAS_LOG}" 2>&1
+    exit 1
+fi
+
+# 是否同意服务条款
+if [ "${ammds_terms}" != "true" ]; then
+    log_message "请同意服务条款"
+    echo "[AMMDS] 请同意服务条款" | tee -a "${FNOAS_LOG}" >> "${FNOAS_LOG}" 2>&1
+    exit 1
+fi
+
+############################
+# 环境变量写入函数
+############################
+ENV_CONFIG="${TRIM_PKGETC}/ammds.env"
+
+set_env() {
+    local key="$1"
+    local value="$2"
+    local file="$3"
+
+    # 确保目录存在
+    mkdir -p "$(dirname "${file}")"
+
+    if [ -f "${file}" ] && grep -q "^${key}=" "${file}" 2>/dev/null; then
+        sed -i "s|^${key}=.*|${key}=${value}|" "${file}"
+    else
+        echo "${key}=${value}" >> "${file}"
+    fi
+}
+
+# 写入环境变量
+log_message "写入环境变量到 ${ENV_CONFIG}"
+
+set_env "AMMDS_SERVER_PORT" "${ammds_port}"     "${ENV_CONFIG}"
+set_env "ADMIN_USER"        "ammds"              "${ENV_CONFIG}"
+set_env "ADMIN_PASS"        "${ammds_password}"  "${ENV_CONFIG}"
+set_env "AMMDS_SYSTEM_MODE" "full"               "${ENV_CONFIG}"
+
+log_message "环境变量写入完成"
 
 exit 0

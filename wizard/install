@@ -64,14 +64,9 @@
             },
             {
                 "type": "switch",
-                "field": "wizard_agree_terms",
+                "field": "ammds_terms",
                 "label": "我已阅读并同意服务条款",
-                "rules": [
-                    {
-                        "required": true,
-                        "message": "请同意服务条款"
-                    }
-                ]
+                "initValue": "false"
             }
         ]
     }

@@ -6,6 +6,7 @@
 ############################
 MAIN_LOG="/tmp/ammds/fnos.log"
 APP_LOG="/tmp/ammds/app.log"
+FNOAS_LOG="${TRIM_TEMP_LOGFILE}"
 
 log_message() {
     local msg="$1"
@@ -36,6 +37,7 @@ log_message "==============主程序启动=============="
 ############################
 LOG_FILE="${APP_LOG}"
 PID_FILE="/tmp/ammds/ammds.pid"
+ENV_CONFIG="${TRIM_PKGETC}/ammds.env"
 
 APP_BIN="${TRIM_APPDEST}/bin/ammds"
 WORK_DIR="${TRIM_APPDEST_VOL}/@appshare/ammds"

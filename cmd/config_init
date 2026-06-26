@@ -15,4 +15,36 @@ log_message() {
 
 log_message "==============配置开始=============="
 
+############################
+# 环境变量写入函数
+############################
+ENV_CONFIG="${TRIM_PKGETC}/ammds.env"
+
+set_env() {
+    local key="$1"
+    local value="$2"
+    local file="$3"
+
+    # 确保目录存在
+    mkdir -p "$(dirname "${file}")"
+
+    if [ -f "${file}" ] && grep -q "^${key}=" "${file}" 2>/dev/null; then
+        sed -i "s|^${key}=.*|${key}=${value}|" "${file}"
+    else
+        echo "${key}=${value}" >> "${file}"
+    fi
+}
+
+# 更新环境变量
+log_message "更新环境变量到 ${ENV_CONFIG}"
+
+set_env "AMMDS_SERVER_PORT"      "${ammds_update_port}"       "${ENV_CONFIG}"
+set_env "AMMDS_SCHEDULER_ENABLE" "${AMMDS_SCHEDULER_ENABLE}" "${ENV_CONFIG}"
+set_env "AMMDS_MONITOR_ENABLE"   "${AMMDS_MONITOR_ENABLE}"   "${ENV_CONFIG}"
+set_env "AMMDS_NETWORK_TIMEOUT"  "${AMMDS_NETWORK_TIMEOUT}"  "${ENV_CONFIG}"
+set_env "AMMDS_MAX_FILE_SIZE"    "${AMMDS_MAX_FILE_SIZE}"    "${ENV_CONFIG}"
+set_env "AMMDS_MAX_REQUEST_SIZE" "${AMMDS_MAX_REQUEST_SIZE}" "${ENV_CONFIG}"
+
+log_message "环境变量更新完成"
+
 exit 0
