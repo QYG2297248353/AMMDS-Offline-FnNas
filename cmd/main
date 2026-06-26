@@ -39,13 +39,34 @@ LOG_FILE="${APP_LOG}"
 PID_FILE="/tmp/ammds/ammds.pid"
 ENV_CONFIG="${TRIM_PKGETC}/ammds.env"
 
-APP_BIN="${TRIM_APPDEST}/bin/ammds"
-WORK_DIR="${TRIM_APPDEST_VOL}/@appshare/ammds"
+init_env() {
+    # 根据系统架构选择对应二进制
+    case "${TRIM_SYS_ARCH}" in
+        x86_64|amd64)  ARCH_SUFFIX="amd" ;;
+        aarch64|arm64) ARCH_SUFFIX="arm" ;;
+        *)
+            log_message "错误：不支持的系统架构 ${TRIM_SYS_ARCH}"
+            echo "[AMMDS] 不支持的系统架构：${TRIM_SYS_ARCH}" | tee -a "${FNOAS_LOG}"
+            return 1
+            ;;
+    esac
+    APP_BIN="${TRIM_APPDEST}/bin/ammds-${ARCH_SUFFIX}"
+    WORK_DIR="${TRIM_APPDEST_VOL}/@appshare/ammds"
 
-AMMDS_PORT="${ammds_app_port}"
-PASSWORD="${ammds_admin_password}"
+    # 从配置文件加载环境变量
+    if [ -f "${ENV_CONFIG}" ]; then
+        set -a
+        . "${ENV_CONFIG}"
+        set +a
+    else
+        log_message "错误：配置文件不存在 ${ENV_CONFIG}"
+        echo "[AMMDS] 配置文件不存在：${ENV_CONFIG}" | tee -a "${FNOAS_LOG}"
+        return 1
+    fi
 
-mkdir -p "${WORK_DIR}"
+    mkdir -p "${WORK_DIR}"
+    return 0
+}
 
 ############################
 # 工具函数
@@ -53,6 +74,12 @@ mkdir -p "${WORK_DIR}"
 check_process() {
     local pid="$1"
     kill -0 "${pid}" 2>/dev/null
+}
+
+check_port() {
+    local port="$1"
+    ss -tlnp 2>/dev/null | grep -q ":${port} " && return 0
+    return 1
 }
 
 ############################
@@ -88,23 +115,29 @@ start_process() {
     log_message "准备启动应用"
     log_message "BIN=${APP_BIN}"
     log_message "WORK_DIR=${WORK_DIR}"
-    log_message "PORT=${PORT}"
+    log_message "PORT=${AMMDS_SERVER_PORT}"
 
     if [ ! -x "${APP_BIN}" ]; then
         log_message "启动失败：程序不可执行 ${APP_BIN}"
+        echo "[AMMDS] 程序不可执行：${APP_BIN}" | tee -a "${FNOAS_LOG}"
         return 1
     fi
 
     cd "${WORK_DIR}" || {
         log_message "启动失败：无法进入工作目录"
+        echo "[AMMDS] 无法进入工作目录：${WORK_DIR}" | tee -a "${FNOAS_LOG}"
         return 1
     }
 
+    if check_port "${AMMDS_SERVER_PORT}"; then
+        log_message "启动失败：端口 ${AMMDS_SERVER_PORT} 已被占用"
+        echo "[AMMDS] 端口 ${AMMDS_SERVER_PORT} 已被占用，无法启动" | tee -a "${FNOAS_LOG}"
+        return 1
+    fi
+
     : > "${APP_LOG}"
 
-    AMMDS_SERVER_PORT="${PORT}" \
-    ADMIN_PASS="${PASSWORD}" \
-    "${APP_BIN}" >> "${APP_LOG}" 2>&1 &
+    AMMDS_SERVER_PORT="${AMMDS_SERVER_PORT}" "${APP_BIN}" >> "${APP_LOG}" 2>&1 &
 
     local pid=$!
     sleep 1
@@ -116,6 +149,7 @@ start_process() {
     fi
 
     log_message "启动失败：进程已退出"
+    echo "[AMMDS] 进程启动后异常退出" | tee -a "${FNOAS_LOG}"
     log_message "===== 最近 50 行程序日志 ====="
     tail -n 50 "${APP_LOG}" | while read -r line; do
         log_message "APPLOG: ${line}"
@@ -169,14 +203,17 @@ stop_process() {
 ############################
 case "$1" in
     start)
+        init_env || exit $?
         start_process
         exit $?
         ;;
     stop)
+        init_env || exit $?
         stop_process
         exit $?
         ;;
     status)
+        init_env || exit $?
         status
         exit $?
         ;;
