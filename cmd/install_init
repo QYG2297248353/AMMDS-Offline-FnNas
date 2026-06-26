@@ -41,12 +41,6 @@ if check_port "${ammds_port}"; then
     exit 1
 fi
 
-# 是否同意服务条款
-if [ -z "${ammds_terms}" ]; then
-    log_message "请同意服务条款"
-    echo "[AMMDS] 请同意服务条款" | tee -a "${FNOAS_LOG}"
-    exit 1
-fi
 
 ############################
 # 环境变量写入函数

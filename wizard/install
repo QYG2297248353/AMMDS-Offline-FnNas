@@ -66,7 +66,13 @@
                 "type": "switch",
                 "field": "ammds_terms",
                 "label": "我已阅读并同意服务条款",
-                "initValue": false
+                "initValue": "false",
+                "rules": [
+                    {
+                        "required": true,
+                        "message": "请同意服务条款"
+                    }
+                ]
             }
         ]
     }
