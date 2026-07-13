@@ -40,7 +40,9 @@ set_env() {
 # 更新环境变量
 log_message "更新环境变量到 ${ENV_CONFIG}"
 
-set_env "AMMDS_SERVER_PORT"      "${ammds_update_port}"       "${ENV_CONFIG}"
+if [ -n "${ammds_update_port}" ]; then
+    set_env "AMMDS_SERVER_PORT" "${ammds_update_port}" "${ENV_CONFIG}"
+fi
 set_env "AMMDS_SCHEDULER_ENABLE" "${AMMDS_SCHEDULER_ENABLE}" "${ENV_CONFIG}"
 set_env "AMMDS_MONITOR_ENABLE"   "${AMMDS_MONITOR_ENABLE}"   "${ENV_CONFIG}"
 set_env "AMMDS_NETWORK_TIMEOUT"  "${AMMDS_NETWORK_TIMEOUT}"  "${ENV_CONFIG}"

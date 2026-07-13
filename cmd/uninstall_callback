@@ -36,4 +36,5 @@ if [ "${ammds_data_action}" = "delete" ]; then
 fi
 
 log_message "==============卸载结束=============="
+rm -f "/tmp/ammds/fnos.log"
 exit 0
