@@ -25,6 +25,20 @@ if [ "${ammds_password}" != "${ammds_password_confirm}" ]; then
     exit 1
 fi
 
+# 端口占用检测函数
+check_port() {
+    local port="$1"
+    ss -tlnp 2>/dev/null | grep -q ":${port} " && return 0
+    return 1
+}
+
+# 效验端口占用
+if check_port "${ammds_port}"; then
+    log_message "端口 ${ammds_port} 已被占用，安装失败"
+    echo "[AMMDS] 端口 ${ammds_port} 已被占用，请重新安装并更换端口后重试" | tee -a "${FNOAS_LOG}"
+    exit 1
+fi
+
 ############################
 # 环境变量写入函数
 ############################
@@ -48,7 +62,7 @@ set_env() {
 # 写入环境变量
 log_message "写入环境变量到 ${ENV_CONFIG}"
 
-set_env "AMMDS_SERVER_PORT" "9523"                "${ENV_CONFIG}"
+set_env "AMMDS_SERVER_PORT" "${ammds_port}"           "${ENV_CONFIG}"
 set_env "ADMIN_USER"        "ammds"              "${ENV_CONFIG}"
 set_env "ADMIN_PASS"        "${ammds_password}"  "${ENV_CONFIG}"
 set_env "AMMDS_SYSTEM_MODE" "full"               "${ENV_CONFIG}"

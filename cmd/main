@@ -151,7 +151,7 @@ start_process() {
 
     if check_port "${AMMDS_SERVER_PORT}"; then
         log_message "启动失败：端口 ${AMMDS_SERVER_PORT} 已被占用"
-        echo "[AMMDS] 端口 ${AMMDS_SERVER_PORT} 已被占用，请在应用配置中修改端口后重试" | tee -a "${FNOAS_LOG}"
+        echo "[AMMDS] 端口 ${AMMDS_SERVER_PORT} 已被占用，请重新安装并更换端口后重试" | tee -a "${FNOAS_LOG}"
         return 1
     fi
 
