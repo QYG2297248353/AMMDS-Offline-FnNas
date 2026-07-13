@@ -4,7 +4,7 @@
         "items": [
             {
                 "type": "text",
-                "field": "ammds_update_port",
+                "field": "ammds_port",
                 "label": "应用端口",
                 "helpText": "请输入应用端口号，默认端口为9523",
                 "initValue": "9523",
