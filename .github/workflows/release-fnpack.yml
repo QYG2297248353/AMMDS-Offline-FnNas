@@ -15,6 +15,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+
       # 1️⃣ 校验 tag 并提取版本号
       - name: Verify tag format and extract version
         shell: bash
@@ -27,156 +28,300 @@ jobs:
           fi
 
           VERSION="${TAG#v}"
-          echo "✅ Extracted version: $VERSION"
 
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
 
-      # 2️⃣ 下载核心文件
+
+      # 2️⃣ 下载 amd64 backend
       - name: Download and extract ammds backend (amd64)
         shell: bash
         run: |
           mkdir -p /tmp/backend-amd64
           cd /tmp/backend-amd64
-      
-          echo "Downloading amd64 backend tarball..."
-      
+
           URL="https://github.com/QYG2297248353/AMMDS-Docker/releases/download/${GITHUB_REF_NAME}/ammds-amd64-backend.tar.gz"
+
           curl -L -o backend.tar.gz "$URL"
-      
-          echo "Extracting tarball..."
+
           tar -xzf backend.tar.gz
-      
+
           AMMDS_FILE=$(find . -type f -name "ammds" | head -n 1)
-      
+
           if [ -z "$AMMDS_FILE" ]; then
-            echo "❌ Error: ammds binary not found after extracting amd64 backend!"
+            echo "❌ amd64 binary not found"
             exit 1
           fi
-      
-          echo "Found amd64 ammds at: $AMMDS_FILE"
-      
+
           mkdir -p $GITHUB_WORKSPACE/app/bin
-          cp -f "$AMMDS_FILE" $GITHUB_WORKSPACE/app/bin/ammds-amd
+
+          cp "$AMMDS_FILE" \
+             $GITHUB_WORKSPACE/app/bin/ammds-amd
+
           chmod +x $GITHUB_WORKSPACE/app/bin/ammds-amd
 
+
+
+      # 3️⃣ 下载 arm64 backend
       - name: Download and extract ammds backend (arm64)
         shell: bash
         run: |
           mkdir -p /tmp/backend-arm64
           cd /tmp/backend-arm64
-      
-          echo "Downloading arm64 backend tarball..."
-      
+
           URL="https://github.com/QYG2297248353/AMMDS-Docker/releases/download/${GITHUB_REF_NAME}/ammds-arm64-backend.tar.gz"
+
           curl -L -o backend.tar.gz "$URL"
-      
-          echo "Extracting tarball..."
+
           tar -xzf backend.tar.gz
-      
+
           AMMDS_FILE=$(find . -type f -name "ammds" | head -n 1)
-      
+
           if [ -z "$AMMDS_FILE" ]; then
-            echo "❌ Error: ammds binary not found after extracting arm64 backend!"
+            echo "❌ arm64 binary not found"
             exit 1
           fi
-      
-          echo "Found arm64 ammds at: $AMMDS_FILE"
-      
+
           mkdir -p $GITHUB_WORKSPACE/app/bin
-          cp -f "$AMMDS_FILE" $GITHUB_WORKSPACE/app/bin/ammds-arm
+
+          cp "$AMMDS_FILE" \
+             $GITHUB_WORKSPACE/app/bin/ammds-arm
+
           chmod +x $GITHUB_WORKSPACE/app/bin/ammds-arm
 
-      # 3️⃣ 下载 fnpack 工具
+
+
+      # 4️⃣ 下载 fnpack
       - name: Download fnpack
         shell: bash
         run: |
-          curl -L -o fnpack-1.2.1-linux-amd64 https://static2.fnnas.com/fnpack/fnpack-1.2.1-linux-amd64
+          curl -L \
+            -o fnpack-1.2.1-linux-amd64 \
+            https://static2.fnnas.com/fnpack/fnpack-1.2.1-linux-amd64
+
           chmod +x fnpack-1.2.1-linux-amd64
+
           sudo mv fnpack-1.2.1-linux-amd64 /usr/local/bin/fnpack
 
-      # 4️⃣ 资源准备
+
+
+      # 5️⃣ 准备资源
       - name: Prepare source directory
         shell: bash
         run: |
           SRC_DIR="src-temp"
+
           mkdir -p "$SRC_DIR"
 
-          rsync -a --exclude='.git' ./ "$SRC_DIR/"
+          rsync -a \
+            --exclude='.git' \
+            ./ "$SRC_DIR/"
+
           echo "SRC_DIR=$SRC_DIR" >> "$GITHUB_ENV"
 
-      # 5️⃣ 更新 manifest 版本号
+
+
+      # 6️⃣ 更新 manifest
       - name: Update manifest version
         shell: bash
         run: |
+
           MANIFEST="${SRC_DIR}/manifest"
 
           if [ ! -f "$MANIFEST" ]; then
-            echo "❌ Error: manifest file not found at $MANIFEST"
+            echo "❌ manifest not found"
             exit 1
           fi
 
-          echo "Updating manifest version to: ${VERSION}"
 
-          sed -i "s/^version[[:space:]]*=.*/version         = ${VERSION}/" "$MANIFEST"
+          sed -i \
+            "s/^version[[:space:]]*=.*/version         = ${VERSION}/" \
+            "$MANIFEST"
 
-          echo "Updated manifest content:"
-          grep "^version" "$MANIFEST"
 
-      # 6️⃣ 构建 FPK
-      - name: Build fpk
+
+      # 7️⃣ 构建三个 FPK
+      - name: Build FPK packages
         shell: bash
         run: |
+
+          NAME="${GITHUB_EVENT_REPOSITORY_NAME}"
+
+
+          ####################################
+          # 1. 双架构版本
+          ####################################
+
+          echo "Building multi architecture package..."
+
           fnpack build -d "$SRC_DIR"
 
-          echo "Build finished. Searching for .fpk output..."
 
           FILE=$(find . -maxdepth 2 -type f -name "*.fpk" | head -n 1)
 
+
           if [ -z "$FILE" ]; then
-            echo "❌ Error: no .fpk file generated!"
+            echo "❌ multi arch build failed"
             exit 1
           fi
 
-          echo "Found FPK: $FILE"
 
-          cp "$FILE" /tmp/output.fpk
-          echo "FILE_PATH=/tmp/output.fpk" >> "$GITHUB_ENV"
+          cp "$FILE" \
+            "/tmp/${NAME}.fpk"
 
-      # 7️⃣ 资产效验
-      - name: Delete existing release asset if exists
+
+
+          ####################################
+          # 2. x86_64版本
+          ####################################
+
+          echo "Building x86_64 package..."
+
+
+          cp -a "$SRC_DIR" "${SRC_DIR}-x86"
+
+
+          rm -f \
+            "${SRC_DIR}-x86/app/bin/ammds-arm"
+
+
+
+          fnpack build \
+            -d "${SRC_DIR}-x86"
+
+
+
+          FILE=$(find . -maxdepth 2 -type f -name "*.fpk" | tail -n 1)
+
+
+
+          if [ -z "$FILE" ]; then
+            echo "❌ x86_64 build failed"
+            exit 1
+          fi
+
+
+          cp "$FILE" \
+            "/tmp/${NAME}-x86_64.fpk"
+
+
+
+          ####################################
+          # 3. arm64版本
+          ####################################
+
+          echo "Building arm64 package..."
+
+
+
+          cp -a "$SRC_DIR" "${SRC_DIR}-arm"
+
+
+
+          rm -f \
+            "${SRC_DIR}-arm/app/bin/ammds-amd"
+
+
+
+          fnpack build \
+            -d "${SRC_DIR}-arm"
+
+
+
+          FILE=$(find . -maxdepth 2 -type f -name "*.fpk" | tail -n 1)
+
+
+
+          if [ -z "$FILE" ]; then
+            echo "❌ arm64 build failed"
+            exit 1
+          fi
+
+
+          cp "$FILE" \
+            "/tmp/${NAME}-arm64.fpk"
+
+
+
+          echo "MULTI_FPK=/tmp/${NAME}.fpk" >> "$GITHUB_ENV"
+          echo "X86_FPK=/tmp/${NAME}-x86_64.fpk" >> "$GITHUB_ENV"
+          echo "ARM_FPK=/tmp/${NAME}-arm64.fpk" >> "$GITHUB_ENV"
+
+
+
+      # 8️⃣ 删除旧资产
+      - name: Delete existing release assets
         uses: actions/github-script@v7
         with:
           script: |
+
             const { owner, repo } = context.repo
+
             const release_id = context.payload.release.id
-            const asset_name = `${repo}.fpk`
 
-            const assets = await github.rest.repos.listReleaseAssets({
-              owner,
-              repo,
-              release_id
-            })
 
-            const asset = assets.data.find(a => a.name === asset_name)
-
-            if (asset) {
-              console.log(`Deleting existing asset: ${asset.name}`)
-              await github.rest.repos.deleteReleaseAsset({
+            const assets =
+              await github.rest.repos.listReleaseAssets({
                 owner,
                 repo,
-                asset_id: asset.id
+                release_id
               })
-            } else {
-              console.log("No existing asset found")
+
+
+            for (const asset of assets.data) {
+
+              if (
+                asset.name.endsWith(".fpk")
+              ) {
+
+                console.log(
+                  "Deleting:",
+                  asset.name
+                )
+
+                await github.rest.repos.deleteReleaseAsset({
+                  owner,
+                  repo,
+                  asset_id: asset.id
+                })
+              }
             }
 
-      # 8️⃣ 发布 FPK 到 Release
-      - name: Upload .fpk to Release Assets
+
+
+      # 9️⃣ 上传三个 FPK
+      - name: Upload multi arch FPK
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
         with:
           upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ${{ env.FILE_PATH }}
+          asset_path: ${{ env.MULTI_FPK }}
           asset_name: ${{ github.event.repository.name }}.fpk
+          asset_content_type: application/octet-stream
+
+
+
+      - name: Upload x86_64 FPK
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ${{ env.X86_FPK }}
+          asset_name: ${{ github.event.repository.name }}-x86_64.fpk
+          asset_content_type: application/octet-stream
+
+
+
+      - name: Upload arm64 FPK
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ${{ env.ARM_FPK }}
+          asset_name: ${{ github.event.repository.name }}-arm64.fpk
           asset_content_type: application/octet-stream
